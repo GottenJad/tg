@@ -16,7 +16,7 @@ class Animal:
 
 
 with open("key.json", "r") as f:
-    config = json.load(f)Q
+    config = json.load(f)
     bot_token = config["telegram_bot_token"]
 
 bot = telebot.TeleBot(bot_token) 
@@ -199,6 +199,8 @@ def handle_message(message):
               rates_data[name] = "Ошибка получения курса"
         result = '\n'.join([f"{name}: {rate:.2f}" for name, rate in rates_data.items()])
         bot.reply_to(message, f"Текущие курсы:\n{result}")
+    else:
+        bot.reply_to(message, "Команду не поняль.")
 
 
 bot.infinity_polling()
