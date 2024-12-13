@@ -154,7 +154,7 @@ def handle_message(message):
     global chosen_currency, amount
 
     if not update_json_from_cbr():
-        print("Warning: Failed to update JSON from cbr.ru. Using cached data.")
+        print("Невозможно обновить JSON файл.")
         # обновление данных json файла
     if message.text in ["Обмен '$'", "Обмен '€'", "Обмен '¥'"]:
         currency_mapping = {"'$'": "USD", "'€'": "EUR", "'¥'": "CNY"}
