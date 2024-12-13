@@ -7,9 +7,16 @@ import os
 import time
 
 #ссылка на бота @siriusexchanger_bot
+class Animal:
+    def __init__(self, name):
+        self.name = name
+
+    def speak(self):
+        print("Generic animal sound")
+
 
 with open("key.json", "r") as f:
-    config = json.load(f)
+    config = json.load(f)Q
     bot_token = config["telegram_bot_token"]
 
 bot = telebot.TeleBot(bot_token) 
@@ -30,16 +37,63 @@ def welcome(message):
     markup.add(types.KeyboardButton("Обмен '$'"), types.KeyboardButton("Обмен '€'"), types.KeyboardButton("Обмен '¥'"), types.KeyboardButton("Текущий курс"), types.KeyboardButton('Назад'))
     bot.send_message(message.chat.id, "Выберите валюту:", reply_markup=markup)
 
+
+####!!!!!!!!!!!! ВОТ ТУТ КЛАСС и НАСЛЕДОВАНИЕ
+class AbstractConv:
+    def __init__(self, json_file="cbr_rates.json"):
+        pass
+    
+    def load_rates(self):
+        pass
+
+class CurrencyConverter(AbstractConv):
+    def __init__(self, json_file="cbr_rates.json"):
+        self.json_file = json_file
+        self.rates = self.load_rates()
+
+    def load_rates(self):
+        if os.path.exists(self.json_file):
+            try:
+                with open(self.json_file, "r") as f:
+                    return json.load(f)
+            except (json.JSONDecodeError, KeyError) as e:
+                print(f"Ошибка чтения JSON или еще не записано ничего: {e}")
+        return {}
+
+
+
 def get_cbr_rates(currency_code):
     """Получает курс валюты с cbr.ru или из JSON-файла."""
     if os.path.exists(JSON_FILE):
         try:
-            with open(JSON_FILE, "r") as f:
+            with open(JSON_FILE, "r") as f: 
                 rates = json.load(f)
                 return rates.get(currency_code)
         except (json.JSONDecodeError, KeyError) as e:
             print(f"Ошибка чтения или парсинга JSON-файла: {e}")
 
+    def update_rates(self):
+        try:
+            url = "https://www.cbr.ru/scripts/XML_daily.asp"
+            response = requests.get(url)
+            response.raise_for_status()
+            root = ET.fromstring(response.content)
+            rates = {}
+            for valute in root.findall('.//Valute'):
+                code = valute.find('CharCode').text
+                if code in ('USD', 'EUR', 'CNY'):
+                    rate = float(valute.find('Value').text.replace(',', '.'))
+                    rates[code] = rate
+            with open(self.json_file, "w") as f:
+                json.dump(rates, f)
+            self.rates = rates
+            return True
+        except Exception as e:
+            print(f"Невозможно обновить: {e}")
+            return False
+
+    def get_rate(self, currency_code):
+        return self.rates.get(currency_code)
     try:
         url = "https://www.cbr.ru/scripts/XML_daily.asp"
         response = requests.get(url)
@@ -68,6 +122,8 @@ def get_cbr_rates(currency_code):
     except Exception as e:
         print(f"Непредвиденная ошибка: {e}")
         return None
+    
+converter = CurrencyConverter()
 
 def update_json_from_cbr():
     """обновление JSON файла ."""
